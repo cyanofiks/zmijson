@@ -55,9 +55,29 @@ function rndFood(){
 }
 let food=rndFood();
 
+let effects=[];
+
+
 function drawGrid(){
  ctx.fillStyle="#58a85b";
  ctx.fillRect(0,0,cv.width,cv.height);
+ // male "staze"
+ ctx.fillStyle="#9d9d9d";
+ ctx.fillRect(150,0,24,720);
+ ctx.fillRect(300,0,24,720);
+ ctx.fillRect(0,220,480,24);
+ ctx.fillRect(0,500,480,24);
+ // drveće
+ for(let i=40;i<480;i+=120){
+   for(let j=40;j<720;j+=160){
+      ctx.fillStyle="#7b4d21";
+      ctx.fillRect(i+12,j+18,6,12);
+      ctx.beginPath();
+      ctx.fillStyle="#2e8b57";
+      ctx.arc(i+15,j+15,12,0,Math.PI*2);
+      ctx.fill();
+   }
+ }
  ctx.strokeStyle="rgba(255,255,255,.12)";
  for(let x=0;x<=cv.width;x+=G){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,cv.height);ctx.stroke();}
  for(let y=0;y<=cv.height;y+=G){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(cv.width,y);ctx.stroke();}
@@ -85,8 +105,18 @@ function draw(){
 
  ctx.fillStyle="#fff";
  ctx.font="20px Arial";
+ const best=Math.max(score,Number(localStorage.getItem("hdzSnakeBest")||0));
+ if(score>best)localStorage.setItem("hdzSnakeBest",score);
  ctx.fillText("🐍 HDZ Snake",10,24);
  ctx.fillText("Afere: "+score,10,48);
+ ctx.fillText("Rekord: "+Math.max(score,Number(localStorage.getItem("hdzSnakeBest")||0)),10,72);
+ effects.forEach(e=>{
+   ctx.fillStyle="#ffeb3b";
+   ctx.fillText(e.t,e.x,e.y);
+   e.y-=1;
+   e.life--;
+ });
+ effects=effects.filter(e=>e.life>0);
 }
 
 function gameOver(msg){
@@ -107,6 +137,7 @@ function tick(){
  if(h.x===food.x&&h.y===food.y){
    score+=food.v;
    beep(700,.08);
+   effects.push({x:h.x*G+20,y:h.y*G+20,t:"+%d".replace("%d",food.v),life:30});
    do{food=rndFood();}while(snake.some(s=>s.x===food.x&&s.y===food.y));
  }else snake.pop();
  draw();
