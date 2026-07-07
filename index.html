@@ -26,6 +26,155 @@ document.addEventListener("touchmove",e=>e.preventDefault(),{passive:false});
 const cv=document.getElementById("c"),ctx=cv.getContext("2d");
 const G=40,COLS=12,ROWS=18;
 let snake=[{x:6,y:9}],dx=1,dy=0,score=0;
+let lastHead={x:6,y:9};
+
+const foods=[
+ {e:"💰",v:5},
+ {e:"🏢",v:3},
+ {e:"💶",v:10},
+ {e:"🧾",v:1}
+];
+
+const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+function beep(f,d=0.12){
+ try{
+  const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.frequency.value=f;o.connect(g);g.connect(audioCtx.destination);
+  o.start();
+  g.gain.setValueAtTime(.15,ac.currentTime);
+  g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d);
+  o.stop(ac.currentTime+d);
+ }catch(e){}
+}
+
+function rndFood(){
+ return {
+   x:Math.floor(Math.random()*COLS),
+   y:Math.floor(Math.random()*ROWS),
+   ...foods[Math.floor(Math.random()*foods.length)]
+ };
+}
+let food=rndFood();
+
+function drawGrid(){
+ ctx.fillStyle="#58a85b";
+ ctx.fillRect(0,0,cv.width,cv.height);
+ 
+}
+
+function draw(){
+ drawGrid();
+ ctx.font="30px Arial";
+ ctx.fillText(food.e,food.x*G+4,food.y*G+30);
+
+ snake.forEach((s,i)=>{
+   if(i===0){
+     // ghost trail
+     ctx.globalAlpha=0.18;
+     ctx.fillStyle="#1b4da1";
+     ctx.beginPath();
+     ctx.arc(lastHead.x*G+20,lastHead.y*G+20,13,0,Math.PI*2);
+     ctx.fill();
+     ctx.globalAlpha=1;
+
+     ctx.fillStyle="#1b4da1";
+     ctx.beginPath();
+     ctx.arc(s.x*G+20,s.y*G+20,13,0,Math.PI*2);
+     ctx.fill();
+     ctx.fillStyle="#fff";
+     ctx.beginPath();ctx.arc(s.x*G+15,s.y*G+17,2,0,7);ctx.fill();
+     ctx.beginPath();ctx.arc(s.x*G+25,s.y*G+17,2,0,7);ctx.fill();
+   }else{
+     ctx.fillStyle="#2d6cdf";
+     ctx.shadowColor="rgba(0,0,0,.35)";
+     ctx.shadowBlur=4;
+     ctx.fillRect(s.x*G+9,s.y*G+9,22,22);
+     ctx.shadowBlur=0;
+   }
+ });
+
+ ctx.fillStyle="#fff";
+ ctx.font="20px Arial";
+ ctx.fillText("🐍 HDZ Snake",10,24);
+ ctx.fillText("Afere: "+score,10,48);
+}
+
+function gameOver(msg){
+ clearInterval(loop);
+ beep(140,.4);
+ ctx.fillStyle="rgba(0,0,0,.65)";
+ ctx.fillRect(0,0,cv.width,cv.height);
+ ctx.fillStyle="#fff";
+ ctx.font="36px Arial";
+ ctx.fillText(msg,60,cv.height/2);
+}
+
+function tick(){
+ lastHead={x:snake[0].x,y:snake[0].y};
+ const h={x:snake[0].x+dx,y:snake[0].y+dy};
+ if(h.x<0||h.y<0||h.x>=COLS||h.y>=ROWS)return gameOver("💥 Kraj igre");
+ if(snake.some(s=>s.x===h.x&&s.y===h.y))return gameOver("💥 Ugrizao si se");
+ snake.unshift(h);
+ if(h.x===food.x&&h.y===food.y){
+   score+=food.v;
+   beep(700,.08);
+   do{food=rndFood();}while(snake.some(s=>s.x===food.x&&s.y===food.y));
+ }else snake.pop();
+ draw();
+}
+
+document.addEventListener("keydown",e=>{
+ if(e.key==="ArrowUp"&&dy===0){dx=0;dy=-1;}
+ if(e.key==="ArrowDown"&&dy===0){dx=0;dy=1;}
+ if(e.key==="ArrowLeft"&&dx===0){dx=-1;dy=0;}
+ if(e.key==="ArrowRight"&&dx===0){dx=1;dy=0;}
+});
+let sx=0,sy=0;
+cv.addEventListener("touchstart",e=>{e.preventDefault();sx=e.touches[0].clientX;sy=e.touches[0].clientY;},{passive:false});
+cv.addEventListener("touchend",e=>{
+ e.preventDefault();
+ const mx=e.changedTouches[0].clientX-sx,my=e.changedTouches[0].clientY-sy;
+ if(Math.abs(mx)>Math.abs(my)){
+   if(mx>0&&dx===0){dx=1;dy=0;}
+   if(mx<0&&dx===0){dx=-1;dy=0;}
+ }else{
+   if(my>0&&dy===0){dx=0;dy=1;}
+   if(my<0&&dy===0){dx=0;dy=-1;}
+ }
+},{passive:false});
+
+draw();
+const loop=setInterval(tick,180);
+</script>
+</body>
+</html><!DOCTYPE html>
+<html lang="hr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>HDZ Snake</title>
+<style>
+html,body{
+margin:0;padding:0;width:100%;height:100%;overflow:hidden;
+background:#0b2c5f;touch-action:none;overscroll-behavior:none;
+font-family:Arial;display:flex;justify-content:center;align-items:center;flex-direction:column;
+}
+canvas{
+background:#58a85b;border:4px solid #fff;border-radius:12px;
+width:min(96vw,60vh);height:calc(min(96vw,60vh)*1.5);
+touch-action:none;
+}
+button{margin-top:8px;padding:10px 18px;font-size:18px;border-radius:10px;border:none}
+</style>
+</head>
+<body>
+<canvas id="c" width="480" height="720"></canvas>
+<button onclick="location.reload()">🔄 Nova igra</button>
+<script>
+document.addEventListener("touchmove",e=>e.preventDefault(),{passive:false});
+const cv=document.getElementById("c"),ctx=cv.getContext("2d");
+const G=40,COLS=12,ROWS=18;
+let snake=[{x:6,y:9}],dx=1,dy=0,score=0;
 
 const foods=[
  {e:"💰",v:5},
