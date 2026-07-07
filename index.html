@@ -24,7 +24,7 @@ button{margin-top:8px;padding:10px 18px;font-size:18px;border-radius:10px;border
 <script>
 document.addEventListener("touchmove",e=>e.preventDefault(),{passive:false});
 const cv=document.getElementById("c"),ctx=cv.getContext("2d");
-const G=20,COLS=12,ROWS=18;
+const G=40,COLS=12,ROWS=18;
 let snake=[{x:6,y:9}],dx=1,dy=0,score=0;
 
 const foods=[
@@ -164,7 +164,7 @@ cv.addEventListener("touchend",e=>{
 },{passive:false});
 
 draw();
-const loop=setInterval(tick,150);
+const loop=setInterval(tick,100);
 </script>
 </body>
 </html>
